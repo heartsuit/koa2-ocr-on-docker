@@ -1,0 +1,29 @@
+{
+  "name": "koa2-ocr-on-docker",
+  "version": "1.0.0",
+  "description": "Dockerizing a koa web app, achieving ocr with koa2 and tesseract-ocr",
+  "main": "app.js",
+  "scripts": {
+    "start": "node app.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "tesseract",
+    "koa2",
+    "linux",
+    "docker"
+  ],
+  "author": "heartsuit",
+  "license": "ISC",
+  "dependencies": {
+    "koa": "^2.4.1",
+    "koa-bodyparser": "^4.2.0",
+    "koa-multer": "^1.0.2",
+    "koa-router": "^7.2.1",
+    "koa-static": "^4.0.1",
+    "mz": "^2.7.0",
+    "node-tesseract": "^0.2.7",
+    "nunjucks": "^3.0.1",
+    "superagent": "^3.8.0"
+  }
+}

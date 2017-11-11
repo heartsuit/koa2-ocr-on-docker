@@ -1,0 +1,128 @@
+﻿{% extends "base.html" %} {% block body %}
+
+<div id="vm" class="container">
+  <div>
+    <form @submit.prevent="upload" method="post" enctype="multipart/form-data">
+      <div class="input-group">
+        <span class="input-group-btn">
+          <label for="file" class="btn btn-success">选择图片</label>
+          <input id="file" type="file" name="picture" v-on:change="onChange($event)" style="display:none">
+        </span>
+        <span v-text="fileName"></span>
+        <span class="input-group-btn">
+        <button class="btn btn-primary" type="submit">上传图片</button>
+      </span>
+      </div>
+    </form>
+
+    <div class="input-group">
+      <input v-model.trim="url" type="text" class="form-control" placeholder="请输入网络图片地址" v-on:keyup.enter="ocr">
+      <span class="input-group-btn">
+          <button class="btn btn-primary" v-on:click="download">转为文字</button>
+      </span>
+    </div>
+  </div>
+
+  <div id="result" style="width:100%;  height:500px;">
+    <div id="left" style="float:left; width:50%; height:100%;">
+      <img v-bind:src="picURL" alt="" style="width:500px;" />
+    </div>
+    <div id="right" class="text" style="float:left; width:50%; height:100%;" v-bind:class="{error:isError}">
+      <div id="processing" v-if="processing">
+        <img src="/images/processing.gif" />
+      </div>
+      <div v-html="result"></div>
+    </div>
+  </div>
+
+</div>
+
+
+<script>
+  // config toastr
+  toastr.options.positionClass = 'toast-top-center';
+  // vue
+  var vm = new Vue({
+    el: "#vm",
+    data: {
+      fileName: '',
+      picture: {},
+      picURL: '',
+      url: '',
+      result: '',
+      isError: false,
+      tip: {
+        empty: '图片地址不可为空！',
+        type: '不支持的图片格式！',
+        url: '无效的网络地址！',
+      },
+      processing: false,
+    },
+
+    methods: {
+      onChange: function (event) {
+        this.picture = event.target.files[0];
+        this.fileName = event.target.files[0].name;
+      },
+
+      upload: function () {
+        // simple validation
+        // 'image/bmp' is not supported by tesseract-ocr
+        var support = ['image/jpg', 'image/jpeg', 'image/png', 'image/tiff'];
+        if (support.indexOf(this.picture.type) < 0) {
+          toastr.warning(this.tip.type);
+          return;
+        }
+        this.processing = true;
+        var that = this;
+        var formData = new FormData();
+        formData.append('picture', this.picture);
+
+        // specify Content-Type, with formData as well
+        this.$http.post('/upload', formData, {
+          headers: { 'Content-Type': 'multipart/form-data' }
+        }).then(function (res) {
+          res.json().then(function (result) {
+            that.processing = false;
+            that.isError = !result.status;
+            that.picURL = result.url;
+            that.result = result.text.replace(/\n/g, '<br />');
+          });
+        }, function (res) {
+          that.processing = false;
+          console.log(res.body);
+        });
+      },
+
+      download: function () {
+        // simple validation
+        if (this.url.length == 0) {
+          toastr.warning(this.tip.empty);
+          return;
+        } if (!(this.url.startsWith('http://') || this.url.startsWith('https://')) ||
+          this.url.length <= 10) {
+          toastr.error(this.tip.url);
+          return;
+        }
+        this.processing = true;
+        var that = this;
+        var requestData = { url: this.url };
+        this.picURL = this.url;
+        this.$http.post('/download', requestData).then(function (res) {
+          res.json().then(function (result) {
+            that.processing = false;
+            that.isError = !result.status;
+            that.result = result.text.replace(/\n/g, '<br />');
+          });
+        }, function (res) {
+          that.processing = false;
+          console.log(res.body);
+        });
+      }
+    }
+  });
+
+  // fixed footer
+  footerPosition();
+</script>
+{% endblock %}
